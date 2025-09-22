@@ -1,0 +1,75 @@
+CREATE DATABASE IF NOT EXISTS YourCarYourWay CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE YourCarYourWay;
+
+DROP TABLE IF EXISTS Message;
+DROP TABLE IF EXISTS Paiement;
+DROP TABLE IF EXISTS Reservation;
+DROP TABLE IF EXISTS Offre;
+DROP TABLE IF EXISTS Vehicule;
+DROP TABLE IF EXISTS Profil;
+DROP TABLE IF EXISTS Utilisateur;
+
+CREATE TABLE Utilisateur (
+    id_utilisateur INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    prenom VARCHAR(100) NOT NULL,
+    date_naissance DATE,
+    adresse VARCHAR(255),
+    email VARCHAR(150) NOT NULL UNIQUE,
+    mot_de_passe VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Profil (
+    id_profil INT AUTO_INCREMENT PRIMARY KEY,
+    id_utilisateur INT UNIQUE,
+    preferences_langue VARCHAR(50),
+    parametres_notification VARCHAR(255),
+    CONSTRAINT fk_profil_utilisateur FOREIGN KEY (id_utilisateur) REFERENCES Utilisateur(id_utilisateur)
+);
+
+CREATE TABLE Vehicule (
+    id_vehicule INT AUTO_INCREMENT PRIMARY KEY,
+    categorie VARCHAR(20),
+    marque VARCHAR(50),
+    modele VARCHAR(50),
+    immatriculation VARCHAR(20) UNIQUE
+);
+
+CREATE TABLE Offre (
+    id_offre INT AUTO_INCREMENT PRIMARY KEY,
+    ville_depart VARCHAR(100),
+    ville_retour VARCHAR(100),
+    date_heure_depart DATETIME,
+    date_heure_retour DATETIME,
+    id_vehicule INT,
+    tarif DECIMAL(10,2),
+    CONSTRAINT fk_offre_vehicule FOREIGN KEY (id_vehicule) REFERENCES Vehicule(id_vehicule)
+);
+
+CREATE TABLE Reservation (
+    id_reservation INT AUTO_INCREMENT PRIMARY KEY,
+    id_utilisateur INT,
+    id_offre INT,
+    statut ENUM('en cours','annulee','terminee') DEFAULT 'en cours',
+    date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_reservation_utilisateur FOREIGN KEY (id_utilisateur) REFERENCES Utilisateur(id_utilisateur),
+    CONSTRAINT fk_reservation_offre FOREIGN KEY (id_offre) REFERENCES Offre(id_offre)
+);
+
+CREATE TABLE Paiement (
+    id_paiement INT AUTO_INCREMENT PRIMARY KEY,
+    id_reservation INT UNIQUE,
+    montant DECIMAL(10,2),
+    statut ENUM('valide','rembourse','echoue') DEFAULT 'valide',
+    fournisseur VARCHAR(50),
+    CONSTRAINT fk_paiement_reservation FOREIGN KEY (id_reservation) REFERENCES Reservation(id_reservation)
+);
+
+CREATE TABLE Message (
+    id_message INT AUTO_INCREMENT PRIMARY KEY,
+    id_utilisateur INT,
+    contenu TEXT,
+    type ENUM('texte','video'),
+    horodatage DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_message_utilisateur FOREIGN KEY (id_utilisateur) REFERENCES Utilisateur(id_utilisateur)
+);
