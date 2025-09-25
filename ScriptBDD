@@ -1,13 +1,23 @@
 CREATE DATABASE IF NOT EXISTS YourCarYourWay CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE YourCarYourWay;
 
+-- Suppression des tables dans le bon ordre
 DROP TABLE IF EXISTS Message;
 DROP TABLE IF EXISTS Paiement;
 DROP TABLE IF EXISTS Reservation;
 DROP TABLE IF EXISTS Offre;
 DROP TABLE IF EXISTS Vehicule;
+DROP TABLE IF EXISTS Categorie;
+DROP TABLE IF EXISTS Agence;
 DROP TABLE IF EXISTS Profil;
 DROP TABLE IF EXISTS Utilisateur;
+DROP TABLE IF EXISTS Role;
+
+-- Création des tables
+CREATE TABLE Role (
+    id_role INT AUTO_INCREMENT PRIMARY KEY,
+    libelle VARCHAR(50) NOT NULL
+);
 
 CREATE TABLE Utilisateur (
     id_utilisateur INT AUTO_INCREMENT PRIMARY KEY,
@@ -16,7 +26,9 @@ CREATE TABLE Utilisateur (
     date_naissance DATE,
     adresse VARCHAR(255),
     email VARCHAR(150) NOT NULL UNIQUE,
-    mot_de_passe VARCHAR(255) NOT NULL
+    mot_de_passe VARCHAR(255) NOT NULL,
+    id_role INT,
+    CONSTRAINT fk_utilisateur_role FOREIGN KEY (id_role) REFERENCES Role(id_role)
 );
 
 CREATE TABLE Profil (
@@ -27,30 +39,48 @@ CREATE TABLE Profil (
     CONSTRAINT fk_profil_utilisateur FOREIGN KEY (id_utilisateur) REFERENCES Utilisateur(id_utilisateur)
 );
 
+CREATE TABLE Agence (
+    id_agence INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(100),
+    adresse VARCHAR(255),
+    ville VARCHAR(100),
+    code_postal VARCHAR(20),
+    pays VARCHAR(50)
+);
+
+CREATE TABLE Categorie (
+    id_categorie INT AUTO_INCREMENT PRIMARY KEY,
+    code_acriss VARCHAR(20) UNIQUE,
+    description VARCHAR(255)
+);
+
 CREATE TABLE Vehicule (
     id_vehicule INT AUTO_INCREMENT PRIMARY KEY,
-    categorie VARCHAR(20),
+    id_categorie INT,
     marque VARCHAR(50),
     modele VARCHAR(50),
-    immatriculation VARCHAR(20) UNIQUE
+    immatriculation VARCHAR(20) UNIQUE,
+    CONSTRAINT fk_vehicule_categorie FOREIGN KEY (id_categorie) REFERENCES Categorie(id_categorie)
 );
 
 CREATE TABLE Offre (
     id_offre INT AUTO_INCREMENT PRIMARY KEY,
-    ville_depart VARCHAR(100),
-    ville_retour VARCHAR(100),
+    id_vehicule INT,
+    id_agence_depart INT,
+    id_agence_retour INT,
     date_heure_depart DATETIME,
     date_heure_retour DATETIME,
-    id_vehicule INT,
     tarif DECIMAL(10,2),
-    CONSTRAINT fk_offre_vehicule FOREIGN KEY (id_vehicule) REFERENCES Vehicule(id_vehicule)
+    CONSTRAINT fk_offre_vehicule FOREIGN KEY (id_vehicule) REFERENCES Vehicule(id_vehicule),
+    CONSTRAINT fk_offre_agence_depart FOREIGN KEY (id_agence_depart) REFERENCES Agence(id_agence),
+    CONSTRAINT fk_offre_agence_retour FOREIGN KEY (id_agence_retour) REFERENCES Agence(id_agence)
 );
 
 CREATE TABLE Reservation (
     id_reservation INT AUTO_INCREMENT PRIMARY KEY,
     id_utilisateur INT,
     id_offre INT,
-    statut ENUM('en cours','annulee','terminee') DEFAULT 'en cours',
+    statut VARCHAR(20) DEFAULT 'en cours',
     date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_reservation_utilisateur FOREIGN KEY (id_utilisateur) REFERENCES Utilisateur(id_utilisateur),
     CONSTRAINT fk_reservation_offre FOREIGN KEY (id_offre) REFERENCES Offre(id_offre)
@@ -60,16 +90,17 @@ CREATE TABLE Paiement (
     id_paiement INT AUTO_INCREMENT PRIMARY KEY,
     id_reservation INT UNIQUE,
     montant DECIMAL(10,2),
-    statut ENUM('valide','rembourse','echoue') DEFAULT 'valide',
+    statut VARCHAR(20) DEFAULT 'valide',
     fournisseur VARCHAR(50),
     CONSTRAINT fk_paiement_reservation FOREIGN KEY (id_reservation) REFERENCES Reservation(id_reservation)
 );
 
 CREATE TABLE Message (
     id_message INT AUTO_INCREMENT PRIMARY KEY,
-    id_utilisateur INT,
+    id_client INT,
+    id_support INT,
     contenu TEXT,
-    type ENUM('texte','video'),
     horodatage DATETIME DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_message_utilisateur FOREIGN KEY (id_utilisateur) REFERENCES Utilisateur(id_utilisateur)
+    CONSTRAINT fk_message_client FOREIGN KEY (id_client) REFERENCES Utilisateur(id_utilisateur),
+    CONSTRAINT fk_message_support FOREIGN KEY (id_support) REFERENCES Utilisateur(id_utilisateur)
 );
